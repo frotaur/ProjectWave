@@ -112,8 +112,8 @@ class NoHeadModel(nn.Module):
         """
         B,_,M,T = idx.shape #(B,3,M,T)
         
-        idx=torch.permute(idx,(0,3,2,1)) # (B,T,3,M)
-        idx=idx.view(B,T,M*3)
+        idx=torch.permute(idx,(0,3,2,1)) # (B,T,M,3)
+        idx=idx.reshape(B,T,M*3)
 
         pos_emb = self.position_embedding_table(torch.arange(T, device= idx.device)[None].expand(B,-1))# (B,T,nembd)
         idx=self.embedding_linear(idx)+pos_emb # (B,T,nembd)
@@ -124,9 +124,25 @@ class NoHeadModel(nn.Module):
         
         return idx 
 
+
 class PredictionModel(nn.Module):
     def __init__(self,mic_num,tot_timesteps,n_embd,n_hidden,n_head,n_layer,dropout=0.2):
+        super().__init__()
         self.transfo = NoHeadModel(mic_num,tot_timesteps,n_embd,n_hidden,n_head,n_layer,dropout)
         
         self.head_project = nn.Linear(n_embd,mic_num) # Project embeddings to (ordered) recordings of microphones
         # << TEST WITH PREDICTING MIC POSITIONS ALSO ? >>
+    
+    def forward(self,x,target=None):
+        """
+            x = (B,3,M,T)
+            target = (B,3,M,T) translated by one
+        """
+        x=self.transfo(x) # (B,T,C)
+        predict = self.head_project(x) # (B,T,M)
+
+        if(target is not None):
+            # Mse loss between prediction and target
+            loss = F.mse_loss(predict,target.permute(0,3,2,1)[...,0])
+        
+        return predict,loss

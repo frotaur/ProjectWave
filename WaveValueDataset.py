@@ -28,7 +28,7 @@ class WaveValueDataset(Dataset):
         print(f'Initialized dataset with {self.length} examples')
         
         data_ex = self.datadict[self.datafiles[0]]
-        _,_,self.max_length = data_ex['values'].shape
+        _,self.max_length = data_ex['values'].shape
 
         if(path_length is not None):
             self.max_length=path_length
@@ -51,8 +51,9 @@ class WaveValueDataset(Dataset):
         mics = mics.permute(1,0) #(2,M)
         mics = mics[:,:,None].expand(-1,-1,T) # (2,M,T)
         
-        combined = torch.cat((values,mics),dim=0)[:,:,:self.max_length]
-        return combined[:,:,:-1],combined[:,:,1:] # Data, target
+        combined = torch.cat((values,mics),dim=0)[:,:,:self.max_length]  #(3,M,self.max_length)
+
+        return combined[:,:,:-1],combined[:,:,1:] # Data, target #(3,M,self.max_length-1)
 
 #.squeeze()
 if __name__=='__main__':
