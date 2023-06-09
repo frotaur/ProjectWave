@@ -21,6 +21,9 @@ class MultiHeadAttention(nn.Module):
         out = self.dropout(self.proj(out))
         return out
 
+
+
+# ========= USED FOR SOME TESTS CAN BE SAFELY IGNORED ===================
 class MultiHeadAttentionConcise(nn.Module):
     """
         Class implementing MaskedSelfAttention. Based on implementation of minGPT.
