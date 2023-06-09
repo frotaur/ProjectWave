@@ -10,7 +10,7 @@ class Block(nn.Module):
     def __init__(self,n_embd, n_head,n_hidden,dropout=0.2):
         # n_embd: embedding dimension, n_head: the number of heads we'd like
         super().__init__()
-        self.sa = ma.MultiHeadAttentionConcise(n_head,n_embd,dropout)
+        self.sa = ma.MultiHeadAttention(n_head,n_embd,dropout)
         self.ffwd = FeedFoward(n_embd,n_hidden,dropout)
         self.ln1 = nn.LayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)

@@ -15,7 +15,7 @@ class WaveDataset(Dataset):
             mics and wave_solution.
     """
 
-    def __init__(self, data_directory, max_length=None):
+    def __init__(self, data_directory, max_length=None, max_mics=None):
         super().__init__()
 
         self.datadir = data_directory
@@ -29,11 +29,20 @@ class WaveDataset(Dataset):
 
         data_ex = self.datadict[self.datafiles[0]]
         _,self.max_length = data_ex['values'].shape
+        self.max_mics = data_ex['mics'].shape[0] #(M,2)
+        self.source_num = data_ex['Org'].shape[0] #(N,2)
 
         if(max_length is not None):
             self.max_length=max_length
+        
+        if(max_mics is not None):
+            self.max_mics=max_mics
 
-
+    def get_config(self):
+        """
+            Returns max_length, mic number and source number in a tuple.
+        """
+        return (self.max_length,self.max_mics,self.source_num)
 
     def __len__(self):
         return self.length
@@ -45,16 +54,16 @@ class WaveDataset(Dataset):
         ## Option : combine the data so that its (B,M,T,3) and (N,2)
         ## Or, do it inside the model
         #mics' dimension:(6,2)（M,2);values' dimension:(6,512)(M,T);output dimension:(M,T,3)=(6,512,3)
-        mics=torch.from_numpy(data['mics']) # (M,2)
+        mics=torch.from_numpy(data['mics'])[:self.max_mics] # (M,2)
         # TEMPORARY 3-mic
-        values = torch.from_numpy(data['values'])[None,:,:] # (1,M,T)
+        values = torch.from_numpy(data['values'])[None,:self.max_mics,:] # (1,M,T)
 
         T = values.shape[-1]
 
         mics = mics.permute(1,0) #(2,M)
         mics = mics[:,:,None].expand(-1,-1,T) # (2,M,T)
 
-        return torch.cat((values,mics),dim=0)[:,:,:self.max_length],torch.from_numpy(data['Org']) #(N,2), (3,M,T)
+        return torch.cat((values,mics),dim=0)[:,:,:self.max_length],torch.from_numpy(data['Org']) #(3,M,T), (N,2)
 
 #.squeeze()
 if __name__=='__main__':

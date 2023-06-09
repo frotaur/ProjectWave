@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 import os
 from scipy import io
 
-
+# =================== FOR USE WITH GPT-LIKE TRAINING =================================
 class WaveValueDataset(Dataset):
     """
         Dataset class for training transformers on wave equations
