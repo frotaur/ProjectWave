@@ -41,8 +41,9 @@ class Trainer:
             self.run_name = now.strftime("%m_%d-%H-%M-%S")
 
     def save_weights(self):
-        curfold = pathlib.Path(__file__).parent
-        torch.save(self.model.state_dict(),os.path.join(curfold,self.run_name+".pt"))
+        savefold = os.path.join(pathlib.Path(__file__).parent,'SaveWeights')
+        os.makedirs(savefold,exist_ok=True)
+        torch.save(self.model.state_dict(),os.path.join(savefold,self.run_name+".pt"))
         print('Save successful')
 
     def load_weights(self,weights_path):
@@ -72,25 +73,35 @@ class Trainer:
         return out
     
     
-    def optimization(self,epochs,eval_interval,lr=1e-3,loadingbar=True):
+    def optimization(self,epochs,eval_interval,lr=1e-3,save_every=2,loadingbar=True):
         for g in self.optimizer.param_groups:
             g['lr'] = lr
         
 
         tloader=self.trainLoader
-
-        file_path_1='./Predicted origins.txt'
-        file_path_2='./True origins.txt'
+        file_path_1=f'./{self.run_name}_Pred_origins.txt'
+        file_path_2=f'./{self.run_name}_true_origins.txt'
+        file_path_3=f'./{self.run_name}_train_loss.txt'
+        file_path_4=f'./{self.run_name}_tal_loss.txt'
         for epoch in range(epochs):
             flag=0
             # every once in a while evaluate the loss on train and val sets
             if epoch % eval_interval == 0 or epoch == epochs - 1:
                 losses = self.estimate_loss()
+                with open(file_path_3, 'a') as file:
+                    loss_train=losses['train'].cpu().detach().numpy()
+                    file.write(str(loss_train) + '\n')
+                with open(file_path_4, 'a') as file:
+                    loss_validation=losses['val'].cpu().detach().numpy()
+                    file.write(str(loss_validation) + '\n')    
                 print(f"step {epoch}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
             if epoch == epochs-1:
                 flag=1
+            
             # Iterate over dataset :
-
+            if(epoch % save_every == save_every-1):
+                self.save_weights()
+            
             for data,target in tqdm(tloader) :
                 self.optimizer.zero_grad(set_to_none=True)
                 target=target.to(self.device)
@@ -104,14 +115,14 @@ class Trainer:
                 # BUT IF YOU NEED IT YOU CAN RESTORE IT >>
                 #print(f'time for step {t-time.time()}')
                 #t=time.time()
-                # if flag==1:
-                #     print("Predicted origins:",predicts-target)
-                #     with open(file_path_1, 'a') as file:
-                #         predicts_np=predicts.cpu().detach().numpy()
-                #         file.write(str(predicts_np) + '\n')
-                #     with open(file_path_2, 'a') as file:
-                #         true_np=data.cpu().detach().numpy()
-                #         file.write(str(true_np) + '\n')
+                if flag==1:
+                    # print("Predicted origins:",predicts-target)
+                    with open(file_path_1, 'a') as file:
+                        predicts_np=predicts.cpu().detach().numpy()
+                        file.write(str(predicts_np) + '\n')
+                    with open(file_path_2, 'a') as file:
+                        true_np=target.cpu().detach().numpy()
+                        file.write(str(true_np) + '\n')
                     #print(f'time to write : {t-time.time()}')
                 
                 #t=time.time()

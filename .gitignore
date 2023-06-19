@@ -5,3 +5,10 @@ __pycache__
 Large_Dataset
 3sources
 untrackedforme
+1source_20mics
+2sources_30mics
+*.zip
+*sources*
+*.txt
+__MACOSX
+SaveWeights/
