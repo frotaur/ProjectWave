@@ -14,7 +14,7 @@ from WaveModel import WaveModel
 mydataset = WaveDataset('2sources_30plusmics_240k',max_length=512,max_mics=8)
 # automatically take correct number of mic for model
 max_length,mic_num,source_num = mydataset.get_config()
-
+print(f'TRAINING LENGTH : {max_length}, mics : {mic_num}, sources : {source_num}')
 model = WaveModel(mic_num=mic_num,source_num=source_num,
 tot_timesteps=max_length,
 n_embd=180,n_hidden=560,
@@ -22,9 +22,10 @@ n_head=10,n_layer=10,dropout=0.1)
 device = 'cuda:0'
 
 m=model.to(device)
-train=Trainer(model,mydataset,run_name = '240k_8mics_2sourc_thin_2',
-              batch_size=100,device=device)
 
+train=Trainer(model,mydataset,run_name = '240k_8mics_2sourc_thin_2part2',
+              batch_size=100,device=device)
+train.load_weights('SaveWeights/240k_8mics_2sourc_thin_2.pt')
 train.to(device)
 
 print('device : ', device)
